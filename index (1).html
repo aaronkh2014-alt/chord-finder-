@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chord Finder</title>
+<style>
+:root{--bg:#0e0a1f;--card:#1a1330;--line:#2f2556;--fg:#f4f1ff;--mut:#9d93c4;--grad:linear-gradient(135deg,#7c3aed,#ec4899)}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:radial-gradient(1100px 520px at 50% -180px,#2e1766 0%,rgba(14,10,31,0) 70%),var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding-bottom:120px}
+header,main{max-width:1000px;margin:0 auto;padding:0 18px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:14px}
+.logo{font-weight:800;font-size:24px;letter-spacing:-.5px;margin-right:auto;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn,button,select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer}
+.btn.pri{background:var(--grad);border:0;font-weight:600}
+.mut{color:var(--mut)}
+.song{font-size:22px;font-weight:700;margin-top:6px;min-height:1.4em}
+.now{display:flex;gap:40px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 26px;margin:12px 0 16px}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+.big{font-size:80px;font-weight:800;line-height:1.05;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.big.sm{font-size:40px;background:none;color:var(--fg)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:48px 20px;border:2px dashed var(--line);border-radius:20px;text-align:center;cursor:pointer;color:var(--mut)}
+.drop b{color:var(--fg);font-size:20px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;max-height:calc(100vh - 400px);min-height:220px;overflow-y:auto;position:relative;padding:2px}
+.cell{display:flex;flex-direction:column;justify-content:center;min-height:84px;border:1px solid var(--line);background:var(--card);border-radius:14px;text-align:center;cursor:pointer;transition:transform .12s}
+.cell:hover{transform:translateY(-2px)}
+.cell b{font-size:28px;line-height:1.1}
+.cell small{color:var(--mut);font-size:11px}
+.cell.on{background:var(--grad);border-color:transparent;box-shadow:0 0 24px rgba(236,72,153,.45)}
+.cell.on small{color:#fff;opacity:.85}
+.foot{font-size:13px;color:var(--mut);margin-top:18px}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(21,15,40,.96);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+.play{width:48px;height:48px;padding:0;border:0;border-radius:50%;background:var(--grad);display:grid;place-items:center}
+.time{font-variant-numeric:tabular-nums;color:var(--mut);font-size:14px;min-width:92px}
+#seek{flex:1;min-width:140px;accent-color:#ec4899}
+.ctl{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:14px}
+.ctl b{min-width:2.2ch;text-align:center;color:var(--fg)}
+.sq{width:34px;height:34px;padding:0}
+#shape{font-size:12px}
+@media(max-width:600px){.big{font-size:56px}.big.sm{font-size:30px}.now{gap:24px}#grid{max-height:calc(100vh - 440px)}}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">Chord Finder</div>
+<label class="btn pri"><input id="file" type="file" accept="audio/*" hidden>Choose song</label>
+<button id="mic">Listen with mic</button>
+</header>
+<main>
+<div id="song" class="song"></div>
+<div id="status" class="mut"></div>
+<section class="now">
+<div><div class="lbl">Now</div><div id="cur" class="big">–</div></div>
+<div><div class="lbl">Next</div><div id="nxt" class="big sm">–</div></div>
+</section>
+<div id="empty"><label for="file" class="drop"><b>Drop a song here</b><span>or tap to choose an MP3, WAV, FLAC, OGG or M4A file</span></label></div>
+<div id="grid"></div>
+<p class="foot">Works best on clean, simple songs with clear chords. Chords are detected as major or minor triads. Transposing changes the chart, not the audio. With a capo set, chords are shown as the shapes you play.</p>
+</main>
+<audio id="player" hidden></audio>
+<div class="bar">
+<button id="pp" class="play" aria-label="Play or pause"></button>
+<span id="time" class="time">0:00 / 0:00</span>
+<input id="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek">
+<div class="ctl"><span>Transpose</span><button id="tm" class="sq">−</button><b id="tv">0</b><button id="tp" class="sq">+</button><span>Capo</span><select id="capo"></select></div>
+<span id="shape" class="mut"></span>
+</div>
+<script>
+const NOTES=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const $=id=>document.getElementById(id);
+const player=$('player'),grid=$('grid'),cur=$('cur'),nxt=$('nxt'),statusEl=$('status');
+let tr=0,capo=0,segs=[],cells=[],ci=-1,micCtx=null,micStream=null,micRaf=0;
+for(let i=0;i<=9;i++){const o=document.createElement('option');o.value=i;o.textContent=i===0?'none':i;$('capo').appendChild(o);}
+
+// chord templates: 0-11 major, 12-23 minor
+const TPL=[];
+for(let s=0;s<24;s++){const r=s%12,mn=s>=12,v=new Float64Array(12);[0,mn?3:4,7].forEach((o,i)=>v[(r+o)%12]=i===0?1.2:1);const n=Math.hypot(...v);TPL.push(v.map(x=>x/n));}
+function sims(c){const n=Math.hypot(...c)||1;return TPL.map(t=>{let d=0;for(let i=0;i<12;i++)d+=t[i]*c[i];return d/n;});}
+function name(s){if(s<0)return '–';const shift=tr-capo;return NOTES[(((s%12)+shift)%12+12)%12]+(s>=12?'m':'');}
+
+function fft(re,im){const n=re.length;
+for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a),h=len>>1;
+for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<h;k++){const u=i+k,v=u+h,xr=re[v]*cr-im[v]*ci,xi=re[v]*ci+im[v]*cr;re[v]=re[u]-xr;im[v]=im[u]-xi;re[u]+=xr;im[u]+=xi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
+
+// fold a magnitude spectrum into 12 pitch classes
+function chroma(mag,sr,n){const c=new Float64Array(12);let mx=0;
+const k0=Math.ceil(65*n/sr),k1=Math.min(mag.length-1,Math.floor(1800*n/sr));
+for(let k=k0;k<=k1;k++)if(mag[k]>mx)mx=mag[k];
+if(mx<=0)return c;
+for(let k=k0;k<=k1;k++){const m=69+12*Math.log2(k*sr/n/440),r=Math.round(m);if(Math.abs(m-r)>0.35)continue;c[((r%12)+12)%12]+=Math.log1p(30*mag[k]/mx);}
+return c;}
+
+// Viterbi smoothing: penalise chord changes so the chart isn't jittery
+function viterbi(E){const T=E.length,S=24,pen=0.5,bp=new Int16Array(T*S);let prev=Float64Array.from(E[0]);
+for(let t=1;t<T;t++){let bi=0;for(let s=1;s<S;s++)if(prev[s]>prev[bi])bi=s;const bv=prev[bi],cur=new Float64Array(S);
+for(let s=0;s<S;s++){const sw=bv-pen;if(prev[s]>=sw){cur[s]=prev[s]+E[t][s];bp[t*S+s]=s;}else{cur[s]=sw+E[t][s];bp[t*S+s]=bi;}}
+prev=cur;}
+let b=0;for(let s=1;s<S;s++)if(prev[s]>prev[b])b=s;
+const path=new Int16Array(T);for(let t=T-1;t>=0;t--){path[t]=b;b=bp[t*S+b];}
+return path;}
+
+const fmt=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+const setStatus=m=>statusEl.textContent=m;
+
+const LBL={C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+function parseLabel(l){if(l==='N'||l==='X')return -1;const p=l.split(':'),r=LBL[p[0]];if(r===undefined)return -1;return(p[1]&&p[1].startsWith('min'))?12+r:r;}
+function toWav(ab){const f=Math.max(1,Math.round(ab.sampleRate/22050)),sr=Math.round(ab.sampleRate/f),n=Math.floor(ab.length/f),c0=ab.getChannelData(0),c1=ab.numberOfChannels>1?ab.getChannelData(1):null,buf=new ArrayBuffer(44+n*2),v=new DataView(buf);
+const w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i));};
+w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+for(let i=0;i<n;i++){let s=0;for(let j=0;j<f;j++){const k=i*f+j;s+=c1?(c0[k]+c1[k])*.5:c0[k];}v.setInt16(44+i*2,Math.max(-1,Math.min(1,s/f))*32767,true);}
+return new Blob([buf],{type:'audio/wav'});}
+async function viaServer(ab){
+setStatus('Sending to the chord engine… the first request can take about a minute while the server wakes up.');
+const fd=new FormData();fd.append('file',toWav(ab),'song.wav');
+const r=await fetch('/analyze',{method:'POST',body:fd});
+if(!r.ok)throw new Error(r.status);
+const j=await r.json();segs=[];
+for(const c of j.chords){const s=parseLabel(c.chord),last=segs[segs.length-1];if(last&&last.s===s)continue;segs.push({t:c.start,s});}
+if(!segs.length)throw new Error('empty');
+setStatus('Done (server chord engine). Press play, or tap any chord to jump to it.');build();}
+
+async function analyze(file){
+setStatus('Decoding audio…');
+let ab;
+try{const ctx=new (window.AudioContext||window.webkitAudioContext)();ab=await ctx.decodeAudioData(await file.arrayBuffer());ctx.close();}
+catch(e){setStatus('Couldn’t read that file. Try an MP3, WAV, M4A or OGG.');return;}
+try{await viaServer(ab);return;}catch(e){setStatus('Server engine unavailable, using the in-browser detector…');}
+const D=4,sr=ab.sampleRate/D,len=Math.floor(ab.length/D),a0=ab.getChannelData(0),a1=ab.numberOfChannels>1?ab.getChannelData(1):null;
+const x=new Float32Array(len);
+for(let i=0;i<len;i++){let s=0;for(let j=0;j<D;j++){const k=i*D+j;s+=a1?(a0[k]+a1[k])*.5:a0[k];}x[i]=s/D;}
+const N=4096,H=2048;
+if(len<N*2){setStatus('That clip is too short to analyze.');return;}
+const F=Math.floor((len-N)/H)+1,win=new Float32Array(N);
+for(let i=0;i<N;i++)win[i]=.5-.5*Math.cos(2*Math.PI*i/N);
+const re=new Float64Array(N),im=new Float64Array(N),mag=new Float64Array(N/2),ch=[],sil=[];
+for(let f=0;f<F;f++){let e=0;
+for(let i=0;i<N;i++){const v=x[f*H+i];e+=v*v;re[i]=v*win[i];im[i]=0;}
+fft(re,im);for(let k=0;k<N/2;k++)mag[k]=Math.hypot(re[k],im[k]);
+const c=chroma(mag,sr,N),n=Math.hypot(...c)||1;ch.push(c.map(v=>v/n));sil.push(Math.sqrt(e/N)<0.003);
+if(f%60===0){setStatus('Analyzing… '+Math.round(f/F*100)+'%');await new Promise(r=>setTimeout(r));}}
+const sm=ch.map((_,t)=>{const o=new Float64Array(12);for(let d=-1;d<=1;d++){const c=ch[Math.min(F-1,Math.max(0,t+d))];for(let i=0;i<12;i++)o[i]+=c[i];}return o;});
+const path=viterbi(sm.map(sims));
+segs=[];
+for(let t=0;t<F;t++){const s=sil[t]?-1:path[t],last=segs[segs.length-1];if(last&&last.s===s)continue;segs.push({t:t===0?0:(t*H+(N-H)/2)/sr,s});}
+setStatus('Done. Press play, or tap any chord to jump to it.');
+build();
+}
+
+function build(){
+grid.innerHTML='';cells=[];ci=-1;
+segs.forEach((g,i)=>{const d=document.createElement('div');d.className='cell';d.innerHTML='<b></b><small>'+fmt(g.t)+'</small>';d.onclick=()=>{player.currentTime=g.t;if(player.paused)player.play();};grid.appendChild(d);cells.push(d);});
+labels();
+}
+function labels(){
+cells.forEach((d,i)=>d.firstChild.textContent=name(segs[i].s));
+$('tv').textContent=(tr>0?'+':'')+tr;
+$('shape').textContent=capo?'Showing shapes to play with the capo on fret '+capo+'.':'';
+showNow();
+}
+function showNow(){if(micCtx)return;cur.textContent=segs[ci]?name(segs[ci].s):'–';nxt.textContent=segs[ci+1]?name(segs[ci+1].s):'–';}
+
+function idxAt(t){let lo=0,hi=segs.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(segs[m].t<=t)lo=m;else hi=m-1;}return lo;}
+function tick(){
+if(segs.length&&!micCtx){const i=idxAt(player.currentTime);
+if(i!==ci){if(cells[ci])cells[ci].classList.remove('on');ci=i;const c=cells[i];c.classList.add('on');
+grid.scrollTo({top:c.offsetTop-grid.clientHeight/2+c.offsetHeight/2,behavior:'smooth'});showNow();}}
+requestAnimationFrame(tick);}
+tick();
+
+function loadFile(f){if(!f)return;
+if(micCtx)stopMic();
+$('empty').style.display='none';$('song').textContent=f.name.replace(/\.[^.]+$/,'');
+player.src=URL.createObjectURL(f);segs=[];cells=[];grid.innerHTML='';cur.textContent='–';nxt.textContent='–';analyze(f);}
+$('file').onchange=e=>loadFile(e.target.files[0]);
+$('tm').onclick=()=>{tr=Math.max(-6,tr-1);labels();};
+$('tp').onclick=()=>{tr=Math.min(6,tr+1);labels();};
+$('capo').onchange=e=>{capo=+e.target.value;labels();};
+
+// live mic mode
+function stopMic(){cancelAnimationFrame(micRaf);micStream&&micStream.getTracks().forEach(t=>t.stop());micCtx&&micCtx.close();micCtx=null;micStream=null;$('mic').textContent='Listen with mic';cur.textContent='–';nxt.textContent='–';setStatus('');}
+$('mic').onclick=async()=>{
+if(micCtx){stopMic();return;}
+try{micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
+catch(e){setStatus('Microphone access was blocked or isn’t available here.');return;}
+player.pause();
+micCtx=new (window.AudioContext||window.webkitAudioContext)();
+const an=micCtx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0.6;micCtx.createMediaStreamSource(micStream).connect(an);
+const db=new Float32Array(an.frequencyBinCount),mag=new Float32Array(an.frequencyBinCount),sm=new Float64Array(12);
+$('mic').textContent='Stop listening';setStatus('Listening… play or strum something.');nxt.textContent='–';
+const loop=()=>{an.getFloatFrequencyData(db);let peak=-Infinity;
+for(let i=0;i<db.length;i++){if(db[i]>peak)peak=db[i];mag[i]=Math.pow(10,db[i]/20);}
+if(peak>-70){const c=chroma(mag,micCtx.sampleRate,8192),n=Math.hypot(...c)||1;
+for(let i=0;i<12;i++)sm[i]=sm[i]*.8+.2*c[i]/n;
+const s=sims(sm);let b=0;for(let i=1;i<24;i++)if(s[i]>s[b])b=i;cur.textContent=name(b);}
+else cur.textContent='–';
+micRaf=requestAnimationFrame(loop);};
+loop();};
+
+// player bar
+const PLAY='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>',PAUSE='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
+const pp=$('pp'),seek=$('seek');let seeking=false;
+pp.innerHTML=PLAY;
+const toggle=()=>{if(player.src)player.paused?player.play():player.pause();};
+pp.onclick=toggle;
+player.onplay=()=>pp.innerHTML=PAUSE;player.onpause=()=>pp.innerHTML=PLAY;
+player.onloadedmetadata=()=>{seek.max=player.duration;};
+seek.onpointerdown=()=>seeking=true;seek.onpointerup=()=>seeking=false;
+seek.oninput=()=>{player.currentTime=seek.value;};
+player.ontimeupdate=()=>{if(!seeking)seek.value=player.currentTime;$('time').textContent=fmt(player.currentTime)+' / '+fmt(player.duration||0);};
+addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|SELECT|BUTTON/.test(e.target.tagName)){e.preventDefault();toggle();}});
+['dragover','drop'].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')loadFile(e.dataTransfer.files[0]);}));
+</script>
+</body>
+</html>
