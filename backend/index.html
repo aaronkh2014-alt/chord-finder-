@@ -5,56 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chord Finder</title>
 <style>
-:root{--bg:#fbfaf6;--fg:#1d1c19;--mut:#76736a;--card:#fff;--line:#e4e1d6;--acc:#d9541e;--on:#fff;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--fg:#f1efe8;--mut:#9a978c;--card:#1f1e1c;--line:#34322d;--acc:#ff7a45;--on:#1a0f08;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#151514;--fg:#f1efe8;--mut:#9a978c;--card:#1f1e1c;--line:#34322d;--acc:#ff7a45;--on:#1a0f08;color-scheme:dark}
+:root{--bg:#0e0a1f;--card:#1a1330;--line:#2f2556;--fg:#f4f1ff;--mut:#9d93c4;--grad:linear-gradient(135deg,#7c3aed,#ec4899)}
+*{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:860px;margin:0 auto;padding:20px 16px 40px}
-h1{margin:0 0 4px;font-size:28px}
+body{background:radial-gradient(1100px 520px at 50% -180px,#2e1766 0%,rgba(14,10,31,0) 70%),var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding-bottom:120px}
+header,main{max-width:1000px;margin:0 auto;padding:0 18px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:14px}
+.logo{font-weight:800;font-size:24px;letter-spacing:-.5px;margin-right:auto;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.btn,button,select{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 18px;cursor:pointer}
+.btn.pri{background:var(--grad);border:0;font-weight:600}
 .mut{color:var(--mut)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:16px 0 8px}
-.btn,button,select{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:10px;padding:8px 14px;cursor:pointer}
-.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--on);font-weight:600}
-#player{width:100%;margin:8px 0}
-.now{display:flex;gap:32px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 20px;margin:12px 0}
-.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
-.big{font-size:56px;font-weight:700;line-height:1.1;color:var(--acc)}
-.big.sm{font-size:32px;color:var(--fg)}
-.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
-.ctl b{min-width:2ch;text-align:center}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px;max-height:44vh;overflow-y:auto;position:relative;padding:2px}
-.cell{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer}
-.cell b{font-size:22px;display:block}
+.song{font-size:22px;font-weight:700;margin-top:6px;min-height:1.4em}
+.now{display:flex;gap:40px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 26px;margin:12px 0 16px}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut)}
+.big{font-size:80px;font-weight:800;line-height:1.05;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.big.sm{font-size:40px;background:none;color:var(--fg)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:48px 20px;border:2px dashed var(--line);border-radius:20px;text-align:center;cursor:pointer;color:var(--mut)}
+.drop b{color:var(--fg);font-size:20px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;max-height:calc(100vh - 400px);min-height:220px;overflow-y:auto;position:relative;padding:2px}
+.cell{display:flex;flex-direction:column;justify-content:center;min-height:84px;border:1px solid var(--line);background:var(--card);border-radius:14px;text-align:center;cursor:pointer;transition:transform .12s}
+.cell:hover{transform:translateY(-2px)}
+.cell b{font-size:28px;line-height:1.1}
 .cell small{color:var(--mut);font-size:11px}
-.cell.on{background:var(--acc);border-color:var(--acc);color:var(--on)}
-.cell.on small{color:inherit;opacity:.8}
-.foot{font-size:13px;color:var(--mut);margin-top:20px}
+.cell.on{background:var(--grad);border-color:transparent;box-shadow:0 0 24px rgba(236,72,153,.45)}
+.cell.on small{color:#fff;opacity:.85}
+.foot{font-size:13px;color:var(--mut);margin-top:18px}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(21,15,40,.96);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+.play{width:48px;height:48px;padding:0;border:0;border-radius:50%;background:var(--grad);display:grid;place-items:center}
+.time{font-variant-numeric:tabular-nums;color:var(--mut);font-size:14px;min-width:92px}
+#seek{flex:1;min-width:140px;accent-color:#ec4899}
+.ctl{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:14px}
+.ctl b{min-width:2.2ch;text-align:center;color:var(--fg)}
+.sq{width:34px;height:34px;padding:0}
+#shape{font-size:12px}
+@media(max-width:600px){.big{font-size:56px}.big.sm{font-size:30px}.now{gap:24px}#grid{max-height:calc(100vh - 440px)}}
 </style>
 </head>
 <body>
-<main>
-<h1>Chord Finder</h1>
-<div class="mut">Upload a song and get a chord chart that follows the music. Everything runs in your browser; your audio never leaves your device.</div>
-<div class="row">
-<label class="btn pri"><input id="file" type="file" accept="audio/*" hidden>Choose audio file</label>
+<header>
+<div class="logo">Chord Finder</div>
+<label class="btn pri"><input id="file" type="file" accept="audio/*" hidden>Choose song</label>
 <button id="mic">Listen with mic</button>
-</div>
+</header>
+<main>
+<div id="song" class="song"></div>
 <div id="status" class="mut"></div>
-<audio id="player" controls hidden></audio>
 <section class="now">
 <div><div class="lbl">Now</div><div id="cur" class="big">–</div></div>
 <div><div class="lbl">Next</div><div id="nxt" class="big sm">–</div></div>
 </section>
-<section class="ctl">
-<span>Transpose</span><button id="tm">−</button><b id="tv">0</b><button id="tp">+</button>
-<span>Capo</span><select id="capo"></select>
-<span id="shape" class="mut"></span>
-</section>
+<div id="empty"><label for="file" class="drop"><b>Drop a song here</b><span>or tap to choose an MP3, WAV, FLAC, OGG or M4A file</span></label></div>
 <div id="grid"></div>
 <p class="foot">Works best on clean, simple songs with clear chords. Chords are detected as major or minor triads. Transposing changes the chart, not the audio. With a capo set, chords are shown as the shapes you play.</p>
 </main>
+<audio id="player" hidden></audio>
+<div class="bar">
+<button id="pp" class="play" aria-label="Play or pause"></button>
+<span id="time" class="time">0:00 / 0:00</span>
+<input id="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek">
+<div class="ctl"><span>Transpose</span><button id="tm" class="sq">−</button><b id="tv">0</b><button id="tp" class="sq">+</button><span>Capo</span><select id="capo"></select></div>
+<span id="shape" class="mut"></span>
+</div>
 <script>
 const NOTES=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 const $=id=>document.getElementById(id);
@@ -158,9 +169,11 @@ grid.scrollTo({top:c.offsetTop-grid.clientHeight/2+c.offsetHeight/2,behavior:'sm
 requestAnimationFrame(tick);}
 tick();
 
-$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;
+function loadFile(f){if(!f)return;
 if(micCtx)stopMic();
-player.src=URL.createObjectURL(f);player.hidden=false;segs=[];cells=[];grid.innerHTML='';cur.textContent='–';nxt.textContent='–';analyze(f);};
+$('empty').style.display='none';$('song').textContent=f.name.replace(/\.[^.]+$/,'');
+player.src=URL.createObjectURL(f);segs=[];cells=[];grid.innerHTML='';cur.textContent='–';nxt.textContent='–';analyze(f);}
+$('file').onchange=e=>loadFile(e.target.files[0]);
 $('tm').onclick=()=>{tr=Math.max(-6,tr-1);labels();};
 $('tp').onclick=()=>{tr=Math.min(6,tr+1);labels();};
 $('capo').onchange=e=>{capo=+e.target.value;labels();};
@@ -184,6 +197,20 @@ const s=sims(sm);let b=0;for(let i=1;i<24;i++)if(s[i]>s[b])b=i;cur.textContent=n
 else cur.textContent='–';
 micRaf=requestAnimationFrame(loop);};
 loop();};
+
+// player bar
+const PLAY='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>',PAUSE='<svg viewBox="0 0 24 24" width="24" height="24"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>';
+const pp=$('pp'),seek=$('seek');let seeking=false;
+pp.innerHTML=PLAY;
+const toggle=()=>{if(player.src)player.paused?player.play():player.pause();};
+pp.onclick=toggle;
+player.onplay=()=>pp.innerHTML=PAUSE;player.onpause=()=>pp.innerHTML=PLAY;
+player.onloadedmetadata=()=>{seek.max=player.duration;};
+seek.onpointerdown=()=>seeking=true;seek.onpointerup=()=>seeking=false;
+seek.oninput=()=>{player.currentTime=seek.value;};
+player.ontimeupdate=()=>{if(!seeking)seek.value=player.currentTime;$('time').textContent=fmt(player.currentTime)+' / '+fmt(player.duration||0);};
+addEventListener('keydown',e=>{if(e.code==='Space'&&!/INPUT|SELECT|BUTTON/.test(e.target.tagName)){e.preventDefault();toggle();}});
+['dragover','drop'].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')loadFile(e.dataTransfer.files[0]);}));
 </script>
 </body>
 </html>
