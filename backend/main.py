@@ -1,8 +1,11 @@
 import os, tempfile
+from math import gcd
 import numpy as np
 import soundfile as sf
+from scipy.signal import resample_poly
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from madmom.features.chords import CNNChordFeatureProcessor, CRFChordRecognitionProcessor
 
 app = FastAPI(title="Chord Finder API")
@@ -21,6 +24,11 @@ def detect_chords(wav_path):
 
 
 @app.get("/")
+def index():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "index.html"))
+
+
+@app.get("/health")
 def health():
     return {"status": "ok"}
 
@@ -39,5 +47,9 @@ async def analyze(file: UploadFile = File(...)):
             audio, sr = sf.read(src, dtype="float32", always_2d=True)
         except Exception:
             raise HTTPException(400, "Couldn't read that file. Use MP3, WAV, FLAC or OGG.")
-        sf.write(wav, audio.mean(axis=1), sr)
+        mono = audio.mean(axis=1)
+        if sr != 44100:
+            g = gcd(44100, int(sr))
+            mono = resample_poly(mono, 44100 // g, int(sr) // g).astype("float32")
+        sf.write(wav, mono, 44100)
         return {"chords": detect_chords(wav)}
