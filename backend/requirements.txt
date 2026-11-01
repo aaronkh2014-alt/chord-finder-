@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-multipart
+soundfile
+numpy
+scipy
+cython
+madmom @ git+https://github.com/CPJKU/madmom.git
