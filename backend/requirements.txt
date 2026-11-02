@@ -5,4 +5,5 @@ soundfile
 numpy
 scipy
 cython
+psycopg[binary]
 madmom @ git+https://github.com/CPJKU/madmom.git
