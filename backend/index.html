@@ -14,6 +14,10 @@ body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,
 header{position:sticky;top:0;z-index:5;background:var(--teal)}
 .hin{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
 main{max-width:1180px;margin:0 auto;padding:16px 18px}
+.cols{display:flex;gap:18px;align-items:flex-start}
+.colL{flex:1;min-width:0}
+.colR{flex:0 0 340px;display:flex;flex-direction:column;gap:14px}
+@media(max-width:900px){.cols{flex-direction:column-reverse}.colR{flex:auto;width:100%}}
 .logo{font-weight:800;font-size:22px;letter-spacing:-.5px;color:#fff;margin-right:4px}
 .search{flex:1;display:flex;min-width:160px;max-width:430px}
 #yturl{width:100%;border:0;border-radius:4px;padding:10px 14px;font:inherit;color:#232323;background:#fff}
@@ -24,10 +28,12 @@ button,select{font:inherit;cursor:pointer}
 .mut{color:var(--mut)}
 .song{font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;margin:6px 0 2px;min-height:1.2em}
 .pcard{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:12px 0 18px;overflow:hidden}
-.transport{display:flex;align-items:center;gap:14px;padding:14px 16px}
+.transport{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
 .play{width:52px;height:52px;padding:0;border:0;border-radius:50%;background:var(--teal);display:grid;place-items:center;color:#fff;flex:0 0 auto}
-.time{font-variant-numeric:tabular-nums;color:var(--mut);font-size:14px}
+.skip{width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--card);color:var(--fg);display:grid;place-items:center;flex:0 0 auto}
+.time{font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px}
 #seek{flex:1;min-width:120px;accent-color:var(--teal)}
+.trow2{display:flex;justify-content:space-between;padding:2px 16px 10px}
 .tools{display:flex;overflow-x:auto;border-top:1px solid var(--line)}
 .tool{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:96px;padding:10px 14px;border-right:1px solid var(--line);color:var(--mut);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase}
 .tool .val{display:flex;align-items:center;gap:7px;color:var(--fg);font-size:16px;text-transform:none;letter-spacing:0}
@@ -37,7 +43,7 @@ button,select{font:inherit;cursor:pointer}
 .loopb{border:0;background:none;padding:0 6px;color:var(--mut);font-size:21px;line-height:1}
 .loopb.on{color:var(--teal)}
 #grid{display:flex;overflow-x:auto;border-top:1px solid var(--line);scroll-behavior:smooth}
-.cell{position:relative;flex:0 0 86px;height:86px;background:var(--cellbg);color:var(--cellfg);border-right:1px solid var(--line);display:flex;align-items:center;padding:8px 10px;cursor:pointer}
+.cell{position:relative;flex:0 0 86px;height:86px;background:var(--cellbg);color:var(--cellfg);border-right:1px solid var(--line);display:flex;align-items:flex-start;padding:10px;cursor:pointer}
 .cell.bar{box-shadow:inset 3px 0 0 #a7a7a3}
 .cell b{font-size:23px;font-weight:600;white-space:nowrap}
 .cell.n{color:var(--mut)}
@@ -56,17 +62,17 @@ button,select{font:inherit;cursor:pointer}
 .drop b{color:var(--fg);font-size:20px}
 .foot{font-size:13px;color:var(--mut);margin-top:18px}
 /* youtube mode */
-#ytbox{width:100%;max-width:560px;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
+#ytbox{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000}
 #ytbox iframe{width:100%;height:100%;display:block}
 .ytctl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 2px}
 .btnt{font:inherit;border:0;border-radius:4px;background:var(--teal);color:#fff;padding:9px 16px;font-weight:600;cursor:pointer}
 #ytnote{font-size:13px}
-/* library */
-#lib{margin:4px 0 18px}
+/* library — styled like Chordify's "More from your setlist" sidebar card */
+#lib{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .libhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .libhead h2{font-size:16px;margin:0;font-weight:700}
-#libclear{margin-left:auto;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:4px;padding:6px 14px}
-#liblist{display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));gap:10px}
+#libclear{margin-left:auto;font-size:12px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:4px;padding:4px 10px}
+#liblist{display:flex;flex-direction:column;gap:8px}
 .lcard{position:relative;display:flex;flex-direction:column;gap:3px;padding:14px 40px 14px 16px;border:1px solid var(--line);background:var(--card);border-radius:8px;cursor:pointer}
 .lcard:hover{border-color:var(--teal)}
 .lcard b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -86,28 +92,22 @@ button,select{font:inherit;cursor:pointer}
 <button id="mic" class="hbtn ghost">Listen with mic</button>
 <button id="theme" class="hbtn ghost" title="Light or dark theme">◐</button>
 </div></header>
-<main>
-<section id="lib" hidden>
-<div class="libhead"><h2>Your library</h2><button id="libclear">Clear all</button></div>
-<div id="liblist"></div>
-</section>
+<main><div class="cols">
+<div class="colL">
 <div id="song" class="song"></div>
 <div id="status" class="mut"></div>
-<div id="ytwrap" hidden>
-<div id="ytbox"><div id="ytplayer"></div></div>
-<div class="ytctl"><button id="ytcap" class="btnt" hidden>Listen &amp; build the chart</button><span id="ytnote" class="mut"></span></div>
-</div>
 <section id="now" class="now" hidden>
 <div><div class="lbl">Now</div><div id="cur" class="big">–</div></div>
 <div><div class="lbl">Next</div><div id="nxt" class="big sm">–</div></div>
 </section>
 <div class="pcard" id="pcard" hidden>
 <div class="transport">
+<button id="prev" class="skip" aria-label="Previous chord"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 6h2v12H7zM19 6l-9 6 9 6z" fill="currentColor"/></svg></button>
 <button id="pp" class="play" aria-label="Play or pause"></button>
-<span id="tcur" class="time">0:00</span>
+<button id="next" class="skip" aria-label="Next chord"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 6h2v12h-2zM5 6l9 6-9 6z" fill="currentColor"/></svg></button>
 <input id="seek" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek">
-<span id="tdur" class="time">0:00</span>
 </div>
+<div class="trow2"><span id="tcur" class="time">0:00</span><span id="tdur" class="time">0:00</span></div>
 <div class="tools">
 <div class="tool"><span class="val"><input id="vol" type="range" min="0" max="100" value="100" aria-label="Volume"></span>Volume</div>
 <div class="tool"><span class="val"><button id="loop" class="loopb" type="button" aria-label="Loop">∞</button></span>Loop</div>
@@ -121,7 +121,18 @@ button,select{font:inherit;cursor:pointer}
 <div id="dgrams" hidden></div>
 <div id="empty"><label for="file" class="drop"><b>Drop a song here</b><span>or tap to choose an MP3, WAV, FLAC, OGG or M4A file — or paste a YouTube link up top</span></label></div>
 <p class="foot">Works best on clean, simple songs with clear chords. Chords are detected as major or minor triads. Transposing changes the chart, not the audio. With a capo set, chords are shown as the shapes you play. Songs you analyze are saved on this device so they reopen instantly; the audio is sent to the server to be analyzed, and the resulting chords are shared by audio fingerprint so nobody has to analyze the same file twice. For a YouTube link, the official player plays the video while your browser listens to this tab and builds the chart live — nothing is downloaded, and only the chord timeline is saved.</p>
-</main>
+</div>
+<aside class="colR">
+<div id="ytwrap" hidden>
+<div id="ytbox"><div id="ytplayer"></div></div>
+<div class="ytctl"><button id="ytcap" class="btnt" hidden>Listen &amp; build the chart</button><span id="ytnote" class="mut"></span></div>
+</div>
+<section id="lib" hidden>
+<div class="libhead"><h2>More from your library</h2><button id="libclear">Clear all</button></div>
+<div id="liblist"></div>
+</section>
+</aside>
+</div></main>
 <audio id="player" hidden></audio>
 <script>
 const NOTES=['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
@@ -544,6 +555,13 @@ $('file').onchange=e=>{loadFile(e.target.files[0]);e.target.value='';};
 $('tm').onclick=()=>{tr=Math.max(-6,tr-1);labels();};
 $('tp').onclick=()=>{tr=Math.min(6,tr+1);labels();};
 $('capo').onchange=e=>{capo=+e.target.value;labels();};
+
+// skip to the previous / next chord change
+$('prev').onclick=()=>{const m=cmeta[ci];if(!m)return;
+const si=m.seg;
+seekTo(curTimeNow()-segs[si].t>1?segs[si].t:(segs[si-1]?segs[si-1].t:0));};
+$('next').onclick=()=>{const m=cmeta[ci];if(!m)return;
+const nx=segs[m.seg+1];if(nx)seekTo(nx.t);};
 
 // volume / speed / loop — applied to whichever player is active
 let loopOn=false,rate=1,vol=1;
